@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>РЕЗОНАНС — студия звукозаписи · соберите луп прямо на сайте</title>
+<meta name="description" content="Студия звукозаписи РЕЗОНАНС: живой секвенсор на Web Audio, расчёт стоимости сессии и бронирование по звонку.">
+<meta name="theme-color" content="#05060B">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;500;700;800&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305060B'/%3E%3Cg fill='%232F6BFF'%3E%3Crect x='12' y='26' width='6' height='12' rx='3'/%3E%3Crect x='24' y='16' width='6' height='32' rx='3' fill='%23FF2D8A'/%3E%3Crect x='36' y='22' width='6' height='20' rx='3' fill='%23C6FF3D'/%3E%3Crect x='48' y='28' width='6' height='8' rx='3'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root{--nav:70px;--bg:#05060B;--bg2:#0A0D18;--surface:#0E1220;--surface2:#151A2C;--line:#212840;--line2:#333D5C;
+--ink:#EAF0FF;--muted:#9AA6C8;--dim:#6E7B9E;--blue:#2F6BFF;--magenta:#FF2D8A;--lime:#C6FF3D;--cyan:#22E0FF;--amber:#FFB020;
+--ok:#35E08A;--warn:#FFB020;--danger:#FF4A4A;--info:#22E0FF;--track:#0A0D18;--thumb:#2A3350}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--thumb) var(--track)}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:var(--track)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3A4570,#212840);border-radius:99px;border:3px solid var(--track)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--blue),var(--magenta))}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.62 Manrope,system-ui,Segoe UI,Roboto,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Unbounded,Manrope,sans-serif;font-weight:900;letter-spacing:-.035em;line-height:1.02;margin:0}
+h4{margin:0;font-weight:800}
+p{margin:0}
+a{color:inherit}
+.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:6px}
+::selection{background:var(--lime);color:#05060B}
+.wrap{max-width:1240px;margin:0 auto;padding:0 22px}
+section{padding:94px 0;position:relative;scroll-margin-top:calc(var(--nav) + 12px)}
+.bgwash{position:fixed;inset:0;z-index:-2;background:
+ radial-gradient(80% 55% at 82% 2%,rgba(47,107,255,.32),transparent 62%),
+ radial-gradient(65% 45% at 6% 26%,rgba(255,45,138,.20),transparent 62%),
+ radial-gradient(70% 50% at 50% 106%,rgba(198,255,61,.12),transparent 60%),var(--bg)}
+.grid-lines{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.35;
+ background-image:linear-gradient(rgba(47,107,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(47,107,255,.07) 1px,transparent 1px);background-size:64px 64px;
+ mask-image:radial-gradient(80% 70% at 50% 30%,#000,transparent 78%);-webkit-mask-image:radial-gradient(80% 70% at 50% 30%,#000,transparent 78%)}
+.grain{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E")}
+.nav{position:fixed;inset:0 0 auto;height:var(--nav);z-index:100;background:rgba(5,6,11,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid transparent;transition:.3s}
+.nav.scrolled{background:rgba(5,6,11,.95);border-bottom-color:var(--line);box-shadow:0 16px 40px -30px #000}
+.nav__in{max-width:1240px;margin:0 auto;padding:0 22px;height:100%;display:flex;align-items:center;gap:14px}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none;font-family:Unbounded;font-weight:900;font-size:16px;letter-spacing:.16em}
+.logo svg{width:32px;height:32px;flex:none}
+.nav__links{display:flex;gap:2px;margin-left:auto}
+.nav__links a{padding:9px 12px;border-radius:10px;font-size:14px;font-weight:700;color:var(--muted);text-decoration:none;transition:.2s;position:relative}
+.nav__links a:hover{color:var(--ink);background:var(--surface2)}
+.nav__links a.active{color:var(--cyan)}
+.nav__links a.active::after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:2px;background:linear-gradient(90deg,var(--blue),var(--magenta));border-radius:2px}
+.sound{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:11px;border:1px solid var(--line2);background:var(--surface2);color:var(--ink);font:800 12px/1 "JetBrains Mono",monospace;letter-spacing:.08em;cursor:pointer;transition:.2s;white-space:nowrap}
+.sound:hover{border-color:var(--cyan)}
+.sound.off{color:var(--dim)}
+.sound .eqi{display:flex;align-items:flex-end;gap:2px;height:15px}
+.sound .eqi i{width:3px;background:var(--lime);border-radius:2px;height:5px;animation:sb .8s ease-in-out infinite alternate}
+.sound .eqi i:nth-child(2){animation-delay:.15s;background:var(--cyan)}
+.sound .eqi i:nth-child(3){animation-delay:.3s;background:var(--magenta)}
+.sound.off .eqi i{animation:none;height:4px;background:var(--dim)}
+@keyframes sb{to{height:15px}}
+.burger{display:none;width:42px;height:42px;border-radius:11px;border:1px solid var(--line2);background:var(--surface2);color:var(--ink);cursor:pointer;align-items:center;justify-content:center}
+.progress{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:linear-gradient(90deg,var(--blue),var(--magenta),var(--lime))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 20px;border-radius:12px;border:1px solid var(--line2);background:var(--surface2);color:var(--ink);font:800 15px/1 Manrope;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s,border-color .2s;white-space:nowrap}
+.btn:hover{transform:translateY(-2px);border-color:var(--cyan);box-shadow:0 14px 30px -18px var(--cyan)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn--primary{background:linear-gradient(115deg,var(--blue),var(--magenta));color:#fff;border-color:transparent}
+.btn--primary:hover{box-shadow:0 16px 34px -16px var(--magenta)}
+.btn--lime{background:linear-gradient(115deg,var(--lime),var(--cyan));color:#05060B;border-color:transparent}
+.btn--ghost{background:transparent}
+.btn--sm{padding:9px 13px;font-size:13.5px;border-radius:10px}
+.btn--icon{width:38px;height:38px;padding:0}
+.btn svg{width:17px;height:17px}
+.hero{padding-top:calc(var(--nav) + 56px);padding-bottom:60px}
+.hero__grid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:8px 15px;border:1px solid var(--line2);border-radius:99px;background:rgba(34,224,255,.07);color:var(--cyan);font:700 12px/1 "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime);animation:pl 1.6s infinite}
+@keyframes pl{50%{opacity:.25}}
+h1{font-size:clamp(42px,7.4vw,92px);margin:22px 0 18px;letter-spacing:-.05em}
+h1 .l2{display:block;background:linear-gradient(100deg,var(--cyan),var(--blue) 40%,var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:18.5px;max-width:52ch}
+.hero__cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.nowplaying{display:inline-flex;align-items:center;gap:11px;margin-top:24px;padding:10px 15px;border:1px solid var(--line);border-radius:12px;background:rgba(14,18,32,.8);font:700 12.5px/1 "JetBrains Mono",monospace;color:var(--muted)}
+.nowplaying b{color:var(--lime)}
+.facts{display:flex;gap:30px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
+.fact b{display:block;font-family:Unbounded;font-weight:700;font-size:27px;color:var(--cyan);line-height:1.1}
+.fact span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.heroviz{position:relative;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:linear-gradient(160deg,var(--surface),#070A14);box-shadow:0 40px 90px -50px var(--blue)}
+.heroviz canvas{display:block;width:100%;height:330px}
+.heroviz__cap{position:absolute;left:16px;top:14px;font:700 11px/1 "JetBrains Mono",monospace;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+.kicker{display:block;font:700 12px/1 "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--magenta);margin-bottom:14px}
+.head{margin-bottom:32px;max-width:66ch}
+.head h2{font-size:clamp(28px,4.2vw,46px)}
+.head p{color:var(--muted);margin-top:14px}
+.panel{border:1px solid var(--line);border-radius:22px;background:linear-gradient(160deg,var(--surface),rgba(10,13,24,.8));padding:22px;position:relative}
+.lab{display:grid;grid-template-columns:1.4fr .6fr;gap:20px;align-items:start}
+.viz{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#070A14;margin-bottom:16px}
+.viz canvas{display:block;width:100%;height:150px}
+.transport{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.transport .btn--primary{min-width:132px}
+.bpmread{margin-left:auto;font:700 12.5px/1 "JetBrains Mono",monospace;color:var(--dim);letter-spacing:.08em}
+.bpmread b{color:var(--lime);font-size:16px}
+.seqscroll{overflow-x:auto;padding-bottom:8px}
+.seq{min-width:470px;display:grid;gap:6px}
+.seqrow{display:grid;grid-template-columns:62px repeat(16,1fr);gap:5px;align-items:center}
+.seqlbl{font:700 11px/1 "JetBrains Mono",monospace;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.cell{aspect-ratio:1;min-height:18px;border-radius:6px;border:1px solid var(--line);background:#0B0F1C;cursor:pointer;padding:0;transition:transform .12s,background .18s,box-shadow .18s}
+.cell:hover{border-color:var(--line2);transform:scale(1.08)}
+.cell.beat{background:#101627}
+.cell.on{border-color:transparent}
+.cell.cur{box-shadow:0 0 0 2px var(--cyan) inset}
+.seqhead{display:grid;grid-template-columns:62px repeat(16,1fr);gap:5px;margin-bottom:2px}
+.seqhead span{font:400 9.5px/1 "JetBrains Mono",monospace;color:var(--dim);text-align:center}
+.rack{display:grid;gap:15px}
+.ctl{display:grid;gap:8px}
+.ctl__top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ctl label{font:700 11px/1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.ctl output{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--cyan)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--blue) var(--p,50%),var(--line) 0);cursor:pointer;padding:0;border:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--ink);border:4px solid var(--magenta);box-shadow:0 3px 10px rgba(0,0,0,.7);cursor:grab}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ink);border:4px solid var(--magenta);cursor:grab}
+input[type=range]::-moz-range-track{height:8px;background:transparent}
+input[type=range].lime{background:linear-gradient(90deg,var(--lime) var(--p,50%),var(--line) 0)}
+input[type=range].lime::-webkit-slider-thumb{border-color:var(--lime)}
+input[type=range].lime::-moz-range-thumb{border-color:var(--lime)}
+select,input[type=text],input[type=tel],input[type=date],textarea{width:100%;font-family:Manrope;font-size:16px;color:var(--ink);background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:.2s}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239AA6C8' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,224,255,.16)}
+.faders{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.fader{display:grid;gap:6px;justify-items:center;padding:10px 4px;border:1px solid var(--line);border-radius:12px;background:var(--bg2)}
+.fader span{font:700 10px/1 "JetBrains Mono",monospace;letter-spacing:.06em;color:var(--muted)}
+.fader input[type=range]{writing-mode:vertical-lr;direction:rtl;width:8px;height:78px;background:linear-gradient(0deg,var(--blue) var(--p,70%),var(--line) 0)}
+.fader input[type=range]::-webkit-slider-thumb{width:18px;height:14px;border-radius:4px;border-width:3px}
+.fader b{font:700 10.5px/1 "JetBrains Mono",monospace;color:var(--cyan)}
+.rackbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rackbtns .btn{width:100%}
+.tariffs{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px}
+.tariff{border:1px solid var(--line);border-radius:20px;padding:24px;background:linear-gradient(160deg,var(--surface),rgba(10,13,24,.7));display:flex;flex-direction:column;gap:14px;transition:.3s;position:relative;overflow:hidden}
+.tariff:hover{transform:translateY(-5px);border-color:var(--line2);box-shadow:0 30px 60px -40px var(--blue)}
+.tariff.hot::before{content:"хит";position:absolute;right:-30px;top:14px;transform:rotate(38deg);background:linear-gradient(90deg,var(--magenta),var(--blue));color:#fff;font:800 11px/1 Manrope;letter-spacing:.1em;padding:6px 34px}
+.tariff h3{font-size:20px}
+.tariff .price{font-family:Unbounded;font-weight:700;font-size:30px;color:var(--lime)}
+.tariff .price small{font-size:13px;color:var(--dim);font-family:Manrope;font-weight:700}
+.tariff ul{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+.tariff li{display:flex;gap:10px;font-size:14.5px;color:var(--muted)}
+.tariff li::before{content:"";width:6px;height:6px;margin-top:8px;flex:none;border-radius:2px;background:var(--cyan);transform:rotate(45deg)}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-top:22px}
+.checks{display:grid;gap:10px}
+.check{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);cursor:pointer;font-size:14.5px;transition:.2s}
+.check:hover{border-color:var(--line2)}
+.check input{position:absolute;opacity:0;width:0;height:0}
+.box{width:22px;height:22px;border-radius:7px;border:1px solid var(--line2);display:grid;place-items:center;flex:none;color:#05060B;transition:.2s}
+.check input:checked + .box{background:var(--lime);border-color:var(--lime)}
+.check input:focus-visible + .box{outline:2px solid var(--cyan);outline-offset:2px}
+.box svg{width:13px;height:13px;opacity:0}
+.check input:checked + .box svg{opacity:1}
+.check .cost{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--cyan)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper b{font-family:Unbounded;font-size:24px;min-width:70px;text-align:center}
+.sumline{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+.sumline.big{border-top:2px solid var(--line2);margin-top:6px;padding-top:16px}
+.sumline.big b{font-family:Unbounded;font-size:30px;color:var(--ink)}
+.rack-scroll{display:flex;gap:16px;overflow-x:auto;padding:4px 4px 16px}
+.gear{flex:0 0 260px;border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--surface);transition:.3s}
+.gear:hover{border-color:var(--cyan);transform:translateY(-4px)}
+.gear svg{width:52px;height:52px;margin-bottom:14px}
+.gear h4{font-size:16px;margin-bottom:7px}
+.gear p{font-size:13.5px;color:var(--muted)}
+.gear .mono{display:block;margin-top:10px;font-size:11.5px;color:var(--lime);letter-spacing:.06em}
+.releases{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.rel{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--surface);transition:.3s}
+.rel:hover{border-color:var(--line2);transform:translateY(-4px)}
+.rel.playing{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime),0 30px 60px -40px var(--lime)}
+.rel__art{aspect-ratio:1}
+.rel__art svg{width:100%;height:100%;display:block}
+.rel__b{padding:16px;display:grid;gap:9px}
+.rel__b h4{font-size:16px}
+.rel__b p{font-size:13px;color:var(--dim)}
+.timeline{display:grid;gap:2px;max-width:860px}
+.tstep{display:grid;grid-template-columns:56px 1fr;gap:18px;padding:20px 0;border-top:1px solid var(--line)}
+.tstep b{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-family:Unbounded;font-size:15px;background:var(--surface2);border:1px solid var(--line2);color:var(--cyan)}
+.tstep h4{font-size:17px;margin-bottom:6px}
+.tstep p{color:var(--muted);font-size:15px}
+.faq{display:flex;flex-direction:column;gap:10px;max-width:900px}
+.qa{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+.qa button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px;background:transparent;border:0;color:var(--ink);font:800 16px/1.4 Manrope;text-align:left;cursor:pointer}
+.qa button:hover{background:var(--surface2)}
+.qa i{width:26px;height:26px;border-radius:8px;border:1px solid var(--line2);display:grid;place-items:center;color:var(--cyan);flex:none;transition:.3s;font-style:normal}
+.qa.open i{transform:rotate(45deg);background:var(--cyan);color:#05060B}
+.qa__a{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.2,.8,.2,1)}
+.qa__a p{padding:0 20px 20px;color:var(--muted);font-size:15.5px}
+.book{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;align-items:start}
+.form{display:grid;gap:16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{font:700 11px/1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.field .msg{display:none;font-size:12.5px;color:var(--danger)}
+.field.err input,.field.err select,.field.err textarea{border-color:var(--danger);box-shadow:0 0 0 3px rgba(255,74,74,.15)}
+.field.err .msg{display:block}
+textarea{min-height:100px;resize:vertical;line-height:1.55}
+.ok{display:none;text-align:center;padding:14px}
+.ok.show{display:block;animation:pop .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{opacity:0;transform:scale(.95)}}
+.okmark{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;background:rgba(53,224,138,.12);border:1px solid rgba(53,224,138,.4);color:var(--ok)}
+.info{display:grid;gap:14px}
+.infoline{display:flex;gap:13px;align-items:flex-start;font-size:15px}
+.infoline svg{width:19px;height:19px;color:var(--cyan);flex:none;margin-top:3px}
+.infoline span{display:block;color:var(--muted);font-size:13.5px}
+footer{border-top:1px solid var(--line);padding:46px 0 60px;background:linear-gradient(180deg,transparent,rgba(47,107,255,.07))}
+.foot{display:flex;justify-content:space-between;gap:26px;flex-wrap:wrap}
+.foot p{color:var(--dim);font-size:13.5px;max-width:46ch;margin-top:12px}
+.foot__links{display:flex;gap:20px;flex-wrap:wrap;font-weight:700;font-size:14.5px}
+.foot__links a{color:var(--muted);text-decoration:none}
+.foot__links a:hover{color:var(--cyan)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,150%);z-index:160;display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:14px;background:var(--surface2);border:1px solid var(--line2);box-shadow:0 24px 50px -24px #000;transition:transform .42s cubic-bezier(.2,.9,.3,1.2);max-width:calc(100% - 32px);font-size:14.5px}
+.toast.on{transform:translate(-50%,0)}
+.toast i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);flex:none}
+.toast.bad i{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+@media(max-width:1040px){.hero__grid,.lab,.calc,.book{grid-template-columns:1fr}.heroviz canvas{height:240px}}
+@media(max-width:720px){
+ :root{--nav:62px}
+ section{padding:62px 0}
+ .nav__links{position:fixed;left:12px;right:12px;top:calc(var(--nav) + 8px);flex-direction:column;background:var(--surface);border:1px solid var(--line2);border-radius:16px;padding:10px;display:none;box-shadow:0 30px 60px -30px #000}
+ .nav__links.open{display:flex}
+ .nav__links a{padding:13px}
+ .burger{display:flex}
+ .nav .btn--primary span{display:none}
+ .sound span{display:none}
+ .row2{grid-template-columns:1fr}
+ .panel{padding:16px}
+ .facts{gap:20px}
+ .fact b{font-size:22px}
+ .faders{grid-template-columns:repeat(4,1fr);gap:7px}
+ .fader input[type=range]{height:64px}
+ .tstep{grid-template-columns:44px 1fr;gap:12px}
+ .tstep b{width:44px;height:44px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}html{scroll-behavior:auto}.rv{opacity:1;transform:none}}
+</style>
+<noscript><style>.rv{opacity:1;transform:none}</style></noscript>
+</head>
+<body>
+<div class="bgwash"></div><div class="grid-lines"></div><div class="grain"></div>
+
+<header class="nav" id="nav"><div class="nav__in">
+  <a class="logo" href="#top"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#151A2C" stroke="#333D5C"/><g><rect x="12" y="26" width="6" height="12" rx="3" fill="#2F6BFF"/><rect x="24" y="16" width="6" height="32" rx="3" fill="#FF2D8A"/><rect x="36" y="22" width="6" height="20" rx="3" fill="#C6FF3D"/><rect x="48" y="28" width="6" height="8" rx="3" fill="#22E0FF"/></g></svg>РЕЗОНАНС</a>
+  <nav class="nav__links" id="navlinks">
+    <a href="#machine" data-spy="machine">Секвенсор</a><a href="#tariffs" data-spy="tariffs">Тарифы</a><a href="#gear" data-spy="gear">Оборудование</a><a href="#works" data-spy="works">Релизы</a><a href="#book" data-spy="book">Бронь</a>
+  </nav>
+  <button class="sound" id="soundBtn" aria-pressed="true" title="Включить или выключить весь звук">
+    <span class="eqi" aria-hidden="true"><i></i><i></i><i></i></span><span id="soundLbl">ЗВУК ВКЛ</span>
+  </button>
+  <a class="btn btn--primary btn--sm" href="#book">☎ <span>Забронировать</span></a>
+  <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="progress" id="progress"></div>
+</div></header>
+
+<main>
+<section class="hero" id="top"><div class="wrap hero__grid">
+  <div>
+    <span class="eyebrow"><i class="pulse"></i> студия работает · пн–вс 10:00–02:00</span>
+    <h1>ВАШ ЗВУК<span class="l2">НАЧИНАЕТСЯ ЗДЕСЬ</span></h1>
+    <p class="lead">Две аппаратные комнаты, живая акустика и инженер, который не уходит пить кофе посреди дубля. Ниже — наш рабочий секвенсор: соберите луп, послушайте и заберите его в WAV.</p>
+    <div class="hero__cta">
+      <a class="btn btn--lime" href="#machine">Открыть секвенсор
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn btn--ghost" href="#book">Забронировать сессию</a>
+    </div>
+    <div class="nowplaying"><span>СЕЙЧАС ИГРАЕТ</span><b id="npName">бум-бэп</b><span id="npBpm">88 BPM</span></div>
+    <div class="facts">
+      <div class="fact"><b>2</b><span>аппаратные</span></div>
+      <div class="fact"><b>340+</b><span>сведённых треков</span></div>
+      <div class="fact"><b>24 ч</b><span>мастер после сессии</span></div>
+    </div>
+  </div>
+  <div class="heroviz"><span class="heroviz__cap">live spectrum · 44.1 kHz</span><canvas id="heroCanvas"></canvas></div>
+</div></section>
+
+<section id="machine"><div class="wrap">
+  <div class="head rv"><span class="kicker">машина</span><h2>Секвенсор, который правда звучит</h2>
+    <p>Четыре дорожки, шестнадцать шагов. Всё синтезируется в браузере через Web Audio: без сэмплов, без загрузок, без ожидания. Крутите ручки — звук меняется в тот же миг.</p></div>
+  <div class="lab">
+    <div class="panel rv">
+      <div class="viz"><canvas id="labCanvas"></canvas></div>
+      <div class="transport">
+        <button class="btn btn--primary" id="playBtn">▶ Играть</button>
+        <button class="btn btn--sm" id="clearBtn">Очистить</button>
+        <button class="btn btn--sm" id="randBtn">Случайный бит</button>
+        <span class="bpmread">ШАГ <b id="stepRead">01</b>/16 · <b id="bpmRead">88</b> BPM</span>
+      </div>
+      <div class="seqscroll">
+        <div class="seq">
+          <div class="seqhead" id="seqHead"></div>
+          <div id="seqRows"></div>
+        </div>
+      </div>
+      <p class="mono" style="font-size:11.5px;color:var(--dim);margin-top:12px;letter-spacing:.06em">СОВЕТ: ЗАЖМИТЕ PLAY И КЛИКАЙТЕ ПО КЛЕТКАМ — ПЕТЛЯ НЕ ОСТАНАВЛИВАЕТСЯ</p>
+    </div>
+
+    <div class="panel rv">
+      <h3 style="font-size:17px;margin-bottom:16px">Пульт</h3>
+      <div class="rack">
+        <div class="ctl"><label for="sPreset">Пресет</label><select id="sPreset"></select></div>
+        <div class="ctl"><div class="ctl__top"><label for="rBpm">Темп</label><output id="oBpm">88 BPM</output></div><input type="range" id="rBpm" min="70" max="160" value="88"></div>
+        <div class="ctl"><div class="ctl__top"><label for="rSwing">Свинг</label><output id="oSwing">18 %</output></div><input type="range" id="rSwing" min="0" max="60" value="18"></div>
+        <div class="ctl"><div class="ctl__top"><label for="rCut">Срез фильтра</label><output id="oCut">12000 Hz</output></div><input type="range" id="rCut" min="300" max="16000" value="12000"></div>
+        <div class="ctl"><div class="ctl__top"><label for="rDrive">Сатурация</label><output id="oDrive">22 %</output></div><input type="range" id="rDrive" min="0" max="100" value="22"></div>
+        <div class="ctl"><div class="ctl__top"><label for="rVerb">Реверберация</label><output id="oVerb">18 %</output></div><input type="range" class="lime" id="rVerb" min="0" max="80" value="18"></div>
+        <div class="ctl"><div class="ctl__top"><label for="rVol">Громкость</label><output id="oVol">70 %</output></div><input type="range" class="lime" id="rVol" min="0" max="100" value="70"></div>
+        <div class="ctl"><label for="sKey">Тоника баса</label><select id="sKey"><option value="55">A · ля</option><option value="65.41">C · до</option><option value="73.42">D · ре</option><option value="82.41">E · ми</option><option value="87.31">F · фа</option></select></div>
+        <div class="ctl"><label>Дорожки</label><div class="faders" id="faders"></div></div>
+        <div class="rackbtns">
+          <button class="btn btn--sm" id="resetBtn">Сброс</button>
+          <button class="btn btn--sm" id="wavBtn">Скачать WAV</button>
+          <button class="btn btn--sm" id="linkBtn" style="grid-column:1/-1">Скопировать ссылку на бит</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="tariffs"><div class="wrap">
+  <div class="head rv"><span class="kicker">тарифы</span><h2>Считаем сессию честно</h2><p>Оплата по факту времени в студии. Инженер, мониторинг и базовая обработка уже внутри — доплат за «включить микрофон» нет.</p></div>
+  <div class="tariffs">
+    <article class="tariff rv"><h3>Репетиция</h3><div class="price">900 ₽ <small>/ час</small></div>
+      <ul><li>Комната 24 м², барабаны и бэклайн</li><li>Четыре мониторных линии</li><li>Запись стерео-референса в подарок</li><li>От 2 часов</li></ul>
+      <button class="btn btn--sm" data-srv="Репетиция">Выбрать</button></article>
+    <article class="tariff rv hot"><h3>Запись трека</h3><div class="price">2 200 ₽ <small>/ час</small></div>
+      <ul><li>Аппаратная А, вокальная кабина</li><li>Инженер и подбор микрофона</li><li>Компинг дублей и тюн вокала</li><li>Черновое сведение в тот же день</li></ul>
+      <button class="btn btn--sm btn--primary" data-srv="Запись трека">Выбрать</button></article>
+    <article class="tariff rv"><h3>Сведение и мастер</h3><div class="price">3 500 ₽ <small>/ трек</small></div>
+      <ul><li>До 48 дорожек, две правки включены</li><li>Аналоговая сатурация на шине</li><li>Мастер под стриминг −14 LUFS</li><li>Стемы и инструментал на выходе</li></ul>
+      <button class="btn btn--sm" data-srv="Сведение и мастер">Выбрать</button></article>
+  </div>
+  <div class="calc">
+    <div class="panel rv">
+      <h3 style="font-size:18px;margin-bottom:16px">Калькулятор сессии</h3>
+      <div class="ctl" style="margin-bottom:16px"><label for="calcSrv">Услуга</label>
+        <select id="calcSrv"><option value="900">Репетиция — 900 ₽/час</option><option value="2200" selected>Запись трека — 2 200 ₽/час</option><option value="3500">Сведение и мастер — 3 500 ₽/час</option></select></div>
+      <div class="ctl" style="margin-bottom:16px"><label>Часов в студии</label>
+        <div class="stepper"><button class="btn btn--icon" id="hMinus" aria-label="Меньше часов">−</button><b id="hVal">3</b><button class="btn btn--icon" id="hPlus" aria-label="Больше часов">+</button>
+        <span class="mono" style="font-size:11.5px;color:var(--dim)">от 1 до 12</span></div></div>
+      <div class="checks" id="extras">
+        <label class="check"><input type="checkbox" data-cost="2500" data-name="Аранжировка"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span>Аранжировка<span class="cost">+2 500 ₽</span></label>
+        <label class="check"><input type="checkbox" data-cost="3000" data-name="Сессионный музыкант"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span>Сессионный музыкант<span class="cost">+3 000 ₽</span></label>
+        <label class="check"><input type="checkbox" data-cost="1500" data-name="Срочный мастер"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span>Срочный мастер за 24 ч<span class="cost">+1 500 ₽</span></label>
+      </div>
+    </div>
+    <div class="panel rv">
+      <h3 style="font-size:18px;margin-bottom:12px">Смета</h3>
+      <div class="sumline"><span id="sumBaseLbl">Запись трека · 3 ч</span><b id="sumBase">6 600 ₽</b></div>
+      <div class="sumline"><span>Дополнительно</span><b id="sumExtra">0 ₽</b></div>
+      <div class="sumline"><span>Скидка от 5 часов</span><b id="sumDisc" style="color:var(--lime)">−0 ₽</b></div>
+      <div class="sumline big"><span>Итого</span><b id="sumTotal">6 600 ₽</b></div>
+      <button class="btn btn--primary" id="calcBook" style="width:100%;margin-top:16px">Забронировать это время</button>
+      <p class="mono" style="font-size:11.5px;color:var(--dim);margin-top:12px">ПРЕДОПЛАТА НЕ НУЖНА · ОТМЕНА ЗА 12 ЧАСОВ БЕЗ ШТРАФА</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="gear"><div class="wrap">
+  <div class="head rv"><span class="kicker">парк</span><h2>Чем пишем</h2><p>Прокрутите стойку вбок — здесь то, что стоит в сигнальной цепи каждый день.</p></div>
+  <div class="rack-scroll rv" id="gearRack"></div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <div class="head rv"><span class="kicker">релизы</span><h2>Сделано в этих стенах</h2><p>Нажмите «послушать» — секвенсор сверху переключится на грув этого релиза и заиграет вживую.</p></div>
+  <div class="releases" id="relGrid"></div>
+</div></section>
+
+<section id="flow"><div class="wrap">
+  <div class="head rv"><span class="kicker">как проходит сессия</span><h2>Четыре шага от идеи до мастера</h2></div>
+  <div class="timeline">
+    <div class="tstep rv"><b>01</b><div><h4>Звонок и референсы</h4><p>Слушаем ваши демки и два-три референса, подбираем микрофоны и бронируем окно. Пятнадцать минут, без брифов на десять страниц.</p></div></div>
+    <div class="tstep rv"><b>02</b><div><h4>Саундчек и дубли</h4><p>Первый час — постановка звука и мониторинг в наушниках. Дальше пишем дубли, пока не появится тот самый, а не «нормальный».</p></div></div>
+    <div class="tstep rv"><b>03</b><div><h4>Сведение</h4><p>Компинг, чистка, баланс, аналоговая шина. Присылаем версию в мессенджер — правки собираем списком, а не по одной.</p></div></div>
+    <div class="tstep rv"><b>04</b><div><h4>Мастер и файлы</h4><p>Мастер под площадки, WAV 24/48, инструментал и стемы. Отдаём ссылкой на облако, храним проект год.</p></div></div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <div class="head rv"><span class="kicker">вопросы</span><h2>Что обычно спрашивают</h2></div>
+  <div class="faq" id="faqBox"></div>
+</div></section>
+
+<section id="book"><div class="wrap">
+  <div class="head rv"><span class="kicker">бронь</span><h2>Займите окно в студии</h2><p>Оставьте контакт — перезвоним, подтвердим время и пришлём схему проезда и список того, что взять с собой.</p></div>
+  <div class="book">
+    <div class="panel rv">
+      <form class="form" id="bookForm" novalidate>
+        <div class="row2">
+          <div class="field"><label for="bName">Имя или проект</label><input id="bName" placeholder="Как к вам обращаться"><span class="msg">Минимум 2 символа</span></div>
+          <div class="field"><label for="bPhone">Телефон</label><input id="bPhone" placeholder="+7 900 000-00-00" autocomplete="tel"><span class="msg">Формат: +7 900 000-00-00</span></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="bSrv">Услуга</label><select id="bSrv"><option>Репетиция</option><option selected>Запись трека</option><option>Сведение и мастер</option></select><span class="msg"></span></div>
+          <div class="field"><label for="bDate">Дата</label><input id="bDate" type="date"><span class="msg">Выберите дату не раньше сегодняшней</span></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="bTime">Время</label><select id="bTime"><option>10:00–13:00</option><option selected>13:00–16:00</option><option>16:00–19:00</option><option>19:00–22:00</option><option>22:00–02:00</option></select><span class="msg"></span></div>
+          <div class="field"><label for="bPeople">Сколько человек</label><select id="bPeople"><option>1</option><option>2</option><option>3</option><option>4</option><option>5 и больше</option></select><span class="msg"></span></div>
+        </div>
+        <div class="field"><label for="bNote">Что пишем</label><textarea id="bNote" placeholder="Жанр, состав, есть ли демо и референсы"></textarea><span class="msg"></span></div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn btn--primary" type="submit">Забронировать</button><span class="mono" style="font-size:11.5px;color:var(--dim)">ОТВЕЧАЕМ В ТЕЧЕНИЕ 20 МИНУТ</span></div>
+      </form>
+      <div class="ok" id="bookOk">
+        <div class="okmark"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+        <h3 style="font-size:22px;margin-bottom:10px">Окно придержали</h3>
+        <p style="color:var(--muted);margin-bottom:18px" id="bookOkText">—</p>
+        <button class="btn" id="bookAgain">Забронировать ещё</button>
+      </div>
+    </div>
+    <div class="panel rv">
+      <h3 style="font-size:18px;margin-bottom:16px">Студия</h3>
+      <div class="info">
+        <div class="infoline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Заводская, 14, корпус Б, вход 3</b><span>Парковка во дворе, разгрузка у ворот</span></div></div>
+        <div class="infoline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><div><b>Ежедневно 10:00–02:00</b><span>Ночные сессии по предварительной брони</span></div></div>
+        <div class="infoline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h4l2 5-3 2a13 13 0 006 6l2-3 5 2v4a2 2 0 01-2 2A17 17 0 013 5a2 2 0 012-2z"/></svg><div><b>+7 900 000-00-00</b><span>Инженер на связи, а не автоответчик</span></div></div>
+        <div class="infoline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="M4 9h16M8 13h8"/></svg><div><b>Что взять с собой</b><span>Инструмент, наушники, минус на флешке и хорошее настроение</span></div></div>
+      </div>
+      <div class="viz" style="margin-top:18px"><canvas id="roomCanvas" style="height:120px"></canvas></div>
+      <p class="mono" style="font-size:11px;color:var(--dim);margin-top:10px">МОНITORING A ·实时 LEVEL</p>
+    </div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap foot">
+  <div><a class="logo" href="#top"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="#151A2C" stroke="#333D5C"/><rect x="12" y="26" width="6" height="12" rx="3" fill="#2F6BFF"/><rect x="24" y="16" width="6" height="32" rx="3" fill="#FF2D8A"/><rect x="36" y="22" width="6" height="20" rx="3" fill="#C6FF3D"/><rect x="48" y="28" width="6" height="8" rx="3" fill="#22E0FF"/></svg>РЕЗОНАНС</a>
+  <p>Демо-проект для портфолио: студия, релизы и цены вымышлены, звук синтезируется в браузере по-настоящему.</p></div>
+  <div class="foot__links"><a href="index.html">← В портфолио</a><a href="#machine">Секвенсор</a><a href="#tariffs">Тарифы</a><a href="#book">Бронь</a><a href="#top">Наверх ↑</a></div>
+</div></footer>
+
+<div class="toast" id="toast"><i></i><span id="toastText">—</span></div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
+var money=function(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'};
+var toastT; function toast(m,bad){ $('#toastText').textContent=m; $('#toast').classList.toggle('bad',!!bad); $('#toast').classList.add('on'); clearTimeout(toastT); toastT=setTimeout(function(){$('#toast').classList.remove('on')},3200); }
+var TRACKS=[{n:'KICK',c:'#2F6BFF'},{n:'SNARE',c:'#FF2D8A'},{n:'HAT',c:'#22E0FF'},{n:'BASS',c:'#C6FF3D'}];
+var PRESETS={
+ boombap:{name:'бум-бэп',bpm:88,swing:18,cut:9000,drive:30,verb:16,key:55,
+  p:[[1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1],[1,0,0,1,0,0,1,0,0,1,0,0,0,0,1,0]]},
+ house:{name:'хаус',bpm:124,swing:6,cut:13000,drive:22,verb:22,key:65.41,
+  p:[[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],[1,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1]]},
+ breaks:{name:'брейкбит',bpm:152,swing:0,cut:14500,drive:44,verb:12,key:73.42,
+  p:[[1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],[0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,0],[1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1],[1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0]]},
+ ambient:{name:'эмбиент',bpm:76,swing:24,cut:5200,drive:10,verb:62,key:87.31,
+  p:[[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0]]},
+ trap:{name:'трэп',bpm:140,swing:8,cut:11000,drive:36,verb:20,key:82.41,
+  p:[[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0],[1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1],[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0]]}
+};
+var P={bpm:88,swing:18,cut:9000,drive:22,verb:18,vol:70,key:55,faders:[.9,.75,.55,.8],
+  p:PRESETS.boombap.p.map(function(r){return r.slice()}),preset:'boombap'};
+var soundOn=true, AC=null, G=null, playing=false, step=0, nextT=0, timer=null, queue=[], curStep=-1, unlocked=false;
+
+/* ---------- аудио-граф ---------- */
+function noiseBuf(ctx){ var b=ctx.createBuffer(1,ctx.sampleRate*1,ctx.sampleRate),d=b.getChannelData(0);
+  for(var i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b; }
+function impulse(ctx,dur,decay){ var len=Math.floor(ctx.sampleRate*dur),b=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(var c=0;c<2;c++){ var d=b.getChannelData(c); for(var i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay); } } return b; }
+function driveCurve(a){ var k=a*60,n=1024,c=new Float32Array(n);
+  for(var i=0;i<n;i++){ var x=i*2/n-1; c[i]=(1+k)*x/(1+k*Math.abs(x)); } return c; }
+function buildGraph(ctx,p){
+  var master=ctx.createGain(); master.gain.value=p.vol/100*.85;
+  var comp=ctx.createDynamicsCompressor(); comp.threshold.value=-16; comp.knee.value=24; comp.ratio.value=6; comp.attack.value=.004; comp.release.value=.2;
+  var an=ctx.createAnalyser(); an.fftSize=1024; an.smoothingTimeConstant=.72;
+  var sh=ctx.createWaveShaper(); sh.curve=driveCurve(p.drive/100); sh.oversample='2x';
+  var flt=ctx.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=p.cut; flt.Q.value=6;
+  var conv=ctx.createConvolver(); conv.buffer=impulse(ctx,2.1,2.6);
+  var wet=ctx.createGain(); wet.gain.value=p.verb/100;
+  var dry=ctx.createGain(); dry.gain.value=1;
+  var tracks=TRACKS.map(function(t,i){ var g=ctx.createGain(); g.gain.value=p.faders[i]; g.connect(sh); return g; });
+  sh.connect(flt); flt.connect(dry); dry.connect(master); flt.connect(conv); conv.connect(wet); wet.connect(master);
+  master.connect(comp); comp.connect(an); an.connect(ctx.destination);
+  return {ctx:ctx,master:master,an:an,sh:sh,flt:flt,wet:wet,tracks:tracks,noise:noiseBuf(ctx)};
+}
+function vKick(g,t){ var c=g.ctx,o=c.createOscillator(),a=c.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(155,t); o.frequency.exponentialRampToValueAtTime(44,t+.13);
+  a.gain.setValueAtTime(.0001,t); a.gain.linearRampToValueAtTime(1,t+.006); a.gain.exponentialRampToValueAtTime(.0008,t+.42);
+  o.connect(a); a.connect(g.tracks[0]); o.start(t); o.stop(t+.45); }
+function vSnare(g,t){ var c=g.ctx,s=c.createBufferSource(),bp=c.createBiquadFilter(),a=c.createGain();
+  s.buffer=g.noise; bp.type='bandpass'; bp.frequency.value=1750; bp.Q.value=.9;
+  a.gain.setValueAtTime(.85,t); a.gain.exponentialRampToValueAtTime(.001,t+.19);
+  s.connect(bp); bp.connect(a); a.connect(g.tracks[1]); s.start(t); s.stop(t+.22);
+  var o=c.createOscillator(),a2=c.createGain(); o.type='triangle'; o.frequency.setValueAtTime(196,t);
+  a2.gain.setValueAtTime(.42,t); a2.gain.exponentialRampToValueAtTime(.001,t+.12);
+  o.connect(a2); a2.connect(g.tracks[1]); o.start(t); o.stop(t+.14); }
+function vHat(g,t){ var c=g.ctx,s=c.createBufferSource(),hp=c.createBiquadFilter(),a=c.createGain();
+  s.buffer=g.noise; hp.type='highpass'; hp.frequency.value=7800;
+  a.gain.setValueAtTime(.5,t); a.gain.exponentialRampToValueAtTime(.001,t+.055);
+  s.connect(hp); hp.connect(a); a.connect(g.tracks[2]); s.start(t); s.stop(t+.08); }
+function vBass(g,t,f,dur){ var c=g.ctx,o=c.createOscillator(),lp=c.createBiquadFilter(),a=c.createGain();
+  o.type='sawtooth'; o.frequency.setValueAtTime(f,t);
+  lp.type='lowpass'; lp.frequency.setValueAtTime(f*8,t); lp.frequency.exponentialRampToValueAtTime(f*2.2,t+dur); lp.Q.value=8;
+  a.gain.setValueAtTime(.0001,t); a.gain.linearRampToValueAtTime(.6,t+.02); a.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(lp); lp.connect(a); a.connect(g.tracks[3]); o.start(t); o.stop(t+dur+.05); }
+var SCALE=[1,1,1.2,1,1.5,1,1.335,1];
+function fire(g,s,t,p){
+  var sd=60/p.bpm/4;
+  if(p.p[0][s]) vKick(g,t);
+  if(p.p[1][s]) vSnare(g,t);
+  if(p.p[2][s]) vHat(g,t);
+  if(p.p[3][s]) vBass(g,t,p.key*SCALE[s%8],sd*1.7);
+}
+function ensureAudio(){
+  if(AC) { if(AC.state==='suspended') AC.resume(); return true; }
+  var Ctor=window.AudioContext||window.webkitAudioContext;
+  if(!Ctor){ toast('Браузер не поддерживает Web Audio — секвенсор работает без звука',true); return false; }
+  try{ AC=new Ctor(); G=buildGraph(AC,P); }catch(e){ toast('Не удалось запустить аудио',true); return false; }
+  if(AC.state==='suspended') AC.resume();
+  return true;
+}
+function stepDur(){ return 60/P.bpm/4; }
+function scheduler(){
+  if(!AC) return;
+  while(nextT < AC.currentTime+.12){
+    var sd=stepDur(), t=nextT+(step%2? P.swing/100*sd*.55 : 0);
+    if(soundOn) fire(G,step,t,P);
+    queue.push({s:step,t:t});
+    nextT+=sd; step=(step+1)%16;
+  }
+}
+function play(){
+  if(!ensureAudio()) return;
+  if(playing) return;
+  playing=true; step=0; queue=[]; nextT=AC.currentTime+.06;
+  timer=setInterval(scheduler,25); scheduler();
+  $('#playBtn').textContent='■ Стоп'; $('#playBtn').classList.remove('btn--primary'); $('#playBtn').classList.add('btn--lime');
+}
+function stop(){
+  playing=false; clearInterval(timer); timer=null; queue=[]; curStep=-1;
+  $$('.cell.cur').forEach(function(c){c.classList.remove('cur')});
+  $('#playBtn').textContent='▶ Играть'; $('#playBtn').classList.add('btn--primary'); $('#playBtn').classList.remove('btn--lime');
+  $('#stepRead').textContent='01';
+}
+$('#playBtn').addEventListener('click',function(){ playing?stop():play(); });
+
+/* ---------- сетка ---------- */
+$('#seqHead').innerHTML='<span></span>'+Array.from({length:16},function(_,i){return '<span>'+(i%4===0?(i/4+1):'·')+'</span>'}).join('');
+function renderSeq(){
+  $('#seqRows').innerHTML=TRACKS.map(function(tr,ti){
+    return '<div class="seqrow"><span class="seqlbl" style="color:'+tr.c+'">'+tr.n+'</span>'+
+      P.p[ti].map(function(v,si){
+        return '<button class="cell'+(si%4===0?' beat':'')+(v?' on':'')+'" data-t="'+ti+'" data-s="'+si+'" aria-pressed="'+(v?'true':'false')+'" aria-label="'+tr.n+' шаг '+(si+1)+'" style="'+(v?'background:'+tr.c+';box-shadow:0 0 14px -3px '+tr.c:'')+'"></button>';
+      }).join('')+'</div>';
+  }).join('');
+}
+$('#seqRows').addEventListener('click',function(e){
+  var c=e.target.closest('.cell'); if(!c) return;
+  var t=+c.dataset.t,s=+c.dataset.s; P.p[t][s]=P.p[t][s]?0:1;
+  c.classList.toggle('on',!!P.p[t][s]); c.setAttribute('aria-pressed',P.p[t][s]?'true':'false');
+  c.style.cssText=P.p[t][s]?'background:'+TRACKS[t].c+';box-shadow:0 0 14px -3px '+TRACKS[t].c:'';
+  if(!playing&&soundOn&&ensureAudio()&&P.p[t][s]) fire(G,s,AC.currentTime+.01,P);
+});
+$('#clearBtn').addEventListener('click',function(){ P.p=TRACKS.map(function(){return new Array(16).fill(0)}); renderSeq(); toast('Сетка очищена — соберите свой грув'); });
+$('#randBtn').addEventListener('click',function(){
+  var prob=[[.9,.05,.1,.15,.35,.05,.5,.12,.7,.08,.3,.1,.25,.05,.2,.15],
+            [.03,.05,.1,.08,.85,.05,.1,.2,.05,.08,.12,.1,.85,.08,.2,.3],
+            [.8,.25,.55,.3,.75,.25,.6,.35,.8,.3,.55,.3,.75,.35,.6,.45],
+            [.7,.08,.2,.3,.15,.25,.45,.1,.6,.12,.25,.2,.15,.3,.35,.2]];
+  P.p=prob.map(function(row){return row.map(function(p){return Math.random()<p?1:0})});
+  renderSeq(); toast('Случайный бит собран');
+});
+
+/* ---------- пульт ---------- */
+var sPreset=$('#sPreset');
+sPreset.innerHTML=Object.keys(PRESETS).map(function(k){return '<option value="'+k+'">'+PRESETS[k].name+'</option>'}).join('');
+$('#faders').innerHTML=TRACKS.map(function(t,i){
+  return '<div class="fader"><span style="color:'+t.c+'">'+t.n+'</span><input type="range" min="0" max="100" value="'+Math.round(P.faders[i]*100)+'" data-f="'+i+'" aria-label="Громкость '+t.n+'"><b>'+Math.round(P.faders[i]*100)+'</b></div>';
+}).join('');
+function setRange(el){ var min=+el.min,max=+el.max; el.style.setProperty('--p',((el.value-min)/(max-min)*100)+'%'); }
+function syncControls(){
+  $('#rBpm').value=P.bpm; $('#rSwing').value=P.swing; $('#rCut').value=P.cut; $('#rDrive').value=P.drive; $('#rVerb').value=P.verb; $('#rVol').value=P.vol;
+  $('#sKey').value=String(P.key); sPreset.value=P.preset;
+  $('#oBpm').textContent=P.bpm+' BPM'; $('#oSwing').textContent=P.swing+' %'; $('#oCut').textContent=P.cut+' Hz';
+  $('#oDrive').textContent=P.drive+' %'; $('#oVerb').textContent=P.verb+' %'; $('#oVol').textContent=P.vol+' %';
+  $('#bpmRead').textContent=P.bpm; $('#npBpm').textContent=P.bpm+' BPM'; $('#npName').textContent=(PRESETS[P.preset]||{name:'свой грув'}).name;
+  $$('#faders input').forEach(function(el,i){ el.value=Math.round(P.faders[i]*100); setRange(el); el.parentNode.querySelector('b').textContent=el.value; });
+  $$('.rack input[type=range]').forEach(setRange);
+}
+function applyAudio(){
+  if(!G) return;
+  var t=AC.currentTime;
+  G.flt.frequency.setTargetAtTime(P.cut,t,.02);
+  G.wet.gain.setTargetAtTime(soundOn?P.verb/100:0,t,.03);
+  G.sh.curve=driveCurve(P.drive/100);
+  G.master.gain.setTargetAtTime(soundOn?P.vol/100*.85:0,t,.03);
+  G.tracks.forEach(function(g,i){ g.gain.setTargetAtTime(P.faders[i],t,.02); });
+}
+$('#rBpm').addEventListener('input',function(e){P.bpm=+e.target.value;P.preset='custom';syncControls()});
+$('#rSwing').addEventListener('input',function(e){P.swing=+e.target.value;syncControls()});
+$('#rCut').addEventListener('input',function(e){P.cut=+e.target.value;syncControls();applyAudio()});
+$('#rDrive').addEventListener('input',function(e){P.drive=+e.target.value;syncControls();applyAudio()});
+$('#rVerb').addEventListener('input',function(e){P.verb=+e.target.value;syncControls();applyAudio()});
+$('#rVol').addEventListener('input',function(e){P.vol=+e.target.value;syncControls();applyAudio()});
+$('#sKey').addEventListener('change',function(e){P.key=+e.target.value});
+$('#faders').addEventListener('input',function(e){
+  var el=e.target.closest('[data-f]'); if(!el) return;
+  P.faders[+el.dataset.f]=+el.value/100; el.parentNode.querySelector('b').textContent=el.value; setRange(el); applyAudio();
+});
+function loadPreset(k,autoplay){
+  var pr=PRESETS[k]; if(!pr) return;
+  P.preset=k; P.bpm=pr.bpm; P.swing=pr.swing; P.cut=pr.cut; P.drive=pr.drive; P.verb=pr.verb; P.key=pr.key;
+  P.p=pr.p.map(function(r){return r.slice()});
+  renderSeq(); syncControls(); applyAudio();
+  if(autoplay&&!playing) play();
+}
+sPreset.addEventListener('change',function(e){ loadPreset(e.target.value,true); toast('Пресет: '+PRESETS[e.target.value].name); });
+$('#resetBtn').addEventListener('click',function(){
+  P.faders=[.9,.75,.55,.8]; P.vol=70; loadPreset('boombap',false); toast('Пульт вернулся к заводскому пресету');
+});
+
+/* ---------- звук вкл/выкл ---------- */
+function setSound(on){
+  soundOn=on;
+  $('#soundBtn').classList.toggle('off',!on); $('#soundBtn').setAttribute('aria-pressed',on?'true':'false');
+  $('#soundLbl').textContent=on?'ЗВУК ВКЛ':'ЗВУК ВЫКЛ';
+  applyAudio();
+}
+$('#soundBtn').addEventListener('click',function(){ setSound(!soundOn); if(soundOn&&!playing) play(); toast(soundOn?'Звук включён':'Звук выключен полностью'); });
+function firstGesture(){
+  if(unlocked) return; unlocked=true;
+  if(soundOn){ if(ensureAudio()){ applyAudio(); play(); } }
+  window.removeEventListener('pointerdown',firstGesture); window.removeEventListener('keydown',firstGesture);
+}
+window.addEventListener('pointerdown',firstGesture,{once:false});
+window.addEventListener('keydown',firstGesture,{once:false});
+
+/* ---------- экспорт ---------- */
+function encodeWav(buf){
+  var ch=buf.numberOfChannels,len=buf.length,sr=buf.sampleRate;
+  var data=new DataView(new ArrayBuffer(44+len*ch*2)),pos=0;
+  function str(s){ for(var i=0;i<s.length;i++) data.setUint8(pos++,s.charCodeAt(i)); }
+  function u32(v){ data.setUint32(pos,v,true); pos+=4; } function u16(v){ data.setUint16(pos,v,true); pos+=2; }
+  str('RIFF'); u32(36+len*ch*2); str('WAVE'); str('fmt '); u32(16); u16(1); u16(ch); u32(sr); u32(sr*ch*2); u16(ch*2); u16(16); str('data'); u32(len*ch*2);
+  var chans=[]; for(var c=0;c<ch;c++) chans.push(buf.getChannelData(c));
+  for(var i=0;i<len;i++) for(var c2=0;c2<ch;c2++){ var s=clamp(chans[c2][i],-1,1); data.setInt16(pos,s<0?s*0x8000:s*0x7FFF,true); pos+=2; }
+  return new Blob([data.buffer],{type:'audio/wav'});
+}
+function dl(name,blob){ var u=URL.createObjectURL(blob),a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(u)},1500); }
+$('#wavBtn').addEventListener('click',function(){
+  var Off=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  if(!Off){ toast('Этот браузер не умеет офлайн-рендер',true); return; }
+  var btn=$('#wavBtn'); btn.disabled=true; btn.textContent='Рендер…';
+  var sr=44100,sd=60/P.bpm/4,dur=32*sd+1.8;
+  try{
+    var oc=new Off(2,Math.ceil(sr*dur),sr), g=buildGraph(oc,P);
+    for(var i=0;i<32;i++){ var s=i%16,t=i*sd+(s%2?P.swing/100*sd*.55:0)+.02; fire(g,s,t,P); }
+    oc.startRendering().then(function(buf){ dl('rezonans-loop-'+P.bpm+'bpm.wav',encodeWav(buf)); toast('Луп на два такта сохранён в WAV'); btn.disabled=false; btn.textContent='Скачать WAV'; })
+      .catch(function(){ toast('Не удалось отрендерить луп',true); btn.disabled=false; btn.textContent='Скачать WAV'; });
+  }catch(e){ toast('Рендер недоступен в этом браузере',true); btn.disabled=false; btn.textContent='Скачать WAV'; }
+});
+$('#linkBtn').addEventListener('click',function(){
+  var bits=P.p.map(function(r){return r.join('')}).join('-');
+  var hash='#beat='+bits+'.'+P.bpm+'.'+P.swing+'.'+P.cut+'.'+P.drive+'.'+P.verb+'.'+P.key;
+  var url=location.href.split('#')[0]+hash;
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function(){toast('Ссылка на бит скопирована')},fb); else fb();
+  function fb(){ var ta=document.createElement('textarea'); ta.value=url; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy');toast('Ссылка на бит скопирована')}catch(e){toast('Скопируйте адрес из строки браузера',true)} document.body.removeChild(ta); }
+  history.replaceState(null,'',hash);
+});
+(function readHash(){
+  var m=location.hash.match(/beat=([01\-]+)\.(\d+)\.(\d+)\.(\d+)\.(\d+)\.(\d+)\.([\d.]+)/);
+  if(!m) return;
+  var rows=m[1].split('-'); if(rows.length!==4) return;
+  P.p=rows.map(function(r){ return r.split('').slice(0,16).map(function(c){return c==='1'?1:0}); });
+  P.bpm=clamp(+m[2],70,160); P.swing=clamp(+m[3],0,60); P.cut=clamp(+m[4],300,16000); P.drive=clamp(+m[5],0,100); P.verb=clamp(+m[6],0,80); P.key=+m[7]||55;
+  P.preset='custom';
+})();
+
+/* ---------- визуализация ---------- */
+function makeViz(canvas,mode){
+  var ctx=canvas.getContext('2d'),w=0,h=0,dpr=1,freq=null,time=null;
+  function size(){ dpr=Math.min(window.devicePixelRatio||1,2); w=canvas.clientWidth||300; h=canvas.clientHeight||150;
+    canvas.width=Math.floor(w*dpr); canvas.height=Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
+  size();
+  function draw(ts){
+    ctx.clearRect(0,0,w,h);
+    var live=G&&AC&&soundOn&&(playing||mode==='hero');
+    if(live){ if(!freq||freq.length!==G.an.frequencyBinCount){ freq=new Uint8Array(G.an.frequencyBinCount); time=new Uint8Array(G.an.fftSize); }
+      G.an.getByteFrequencyData(freq); G.an.getByteTimeDomainData(time); }
+    var n=mode==='room'?28:56, bw=w/n;
+    for(var i=0;i<n;i++){
+      var v;
+      if(live&&freq){ var idx=Math.floor(Math.pow(i/n,1.6)*(freq.length*.7)); v=freq[idx]/255; }
+      else v=(Math.sin(ts/620+i*.42)*.5+.5)*(mode==='room'?.28:.34)+.05;
+      v=clamp(v,.03,1);
+      var bh=v*(h-16), x=i*bw+2, y=h-bh-8;
+      var grd=ctx.createLinearGradient(0,y,0,h);
+      var c1=i%3===0?'#2F6BFF':(i%3===1?'#FF2D8A':'#22E0FF');
+      grd.addColorStop(0,i/n>.72?'#C6FF3D':c1); grd.addColorStop(1,'rgba(47,107,255,.12)');
+      ctx.fillStyle=grd; ctx.fillRect(x,y,Math.max(2,bw-4),bh);
+    }
+    if(live&&time&&mode!=='room'){
+      ctx.beginPath(); ctx.strokeStyle='rgba(198,255,61,.85)'; ctx.lineWidth=1.6;
+      for(var j=0;j<time.length;j+=4){ var yy=h/2+((time[j]-128)/128)*(h*.36), xx=j/time.length*w;
+        j===0?ctx.moveTo(xx,yy):ctx.lineTo(xx,yy); }
+      ctx.stroke();
+    }
+    ctx.strokeStyle='rgba(47,107,255,.18)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,h-8); ctx.lineTo(w,h-8); ctx.stroke();
+  }
+  return {size:size,draw:draw};
+}
+var vizHero=makeViz($('#heroCanvas'),'hero'), vizLab=makeViz($('#labCanvas'),'lab'), vizRoom=makeViz($('#roomCanvas'),'room');
+var rafId=0, reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function loop(ts){
+  vizHero.draw(ts); vizLab.draw(ts); vizRoom.draw(ts);
+  if(AC&&queue.length){
+    while(queue.length&&queue[0].t<=AC.currentTime){
+      var q=queue.shift(); curStep=q.s;
+      $$('.cell.cur').forEach(function(c){c.classList.remove('cur')});
+      $$('.cell[data-s="'+curStep+'"]').forEach(function(c){c.classList.add('cur')});
+      $('#stepRead').textContent=String(curStep+1).padStart(2,'0');
+    }
+  }
+  rafId=requestAnimationFrame(loop);
+}
+rafId=requestAnimationFrame(loop);
+if(reduce){ cancelAnimationFrame(rafId); vizHero.draw(0); vizLab.draw(0); vizRoom.draw(0); }
+var rz; window.addEventListener('resize',function(){ clearTimeout(rz); rz=setTimeout(function(){ vizHero.size(); vizLab.size(); vizRoom.size(); },160); });
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){ if(playing) stop(); cancelAnimationFrame(rafId); rafId=0; }
+  else if(!rafId&&!reduce){ rafId=requestAnimationFrame(loop); }
+});
+window.addEventListener('pagehide',function(){ if(timer) clearInterval(timer); cancelAnimationFrame(rafId); });
+
+/* ---------- тарифы и калькулятор ---------- */
+var hours=3;
+function calc(){
+  var rate=+$('#calcSrv').value, label=$('#calcSrv').selectedOptions[0].textContent.split(' — ')[0];
+  var base=rate*hours, extra=0;
+  $$('#extras input:checked').forEach(function(i){extra+=+i.dataset.cost});
+  var disc=hours>=5?Math.round(base*.1):0;
+  $('#hVal').textContent=hours;
+  $('#sumBaseLbl').textContent=label+' · '+hours+' ч';
+  $('#sumBase').textContent=money(base); $('#sumExtra').textContent=money(extra);
+  $('#sumDisc').textContent='−'+money(disc); $('#sumTotal').textContent=money(base+extra-disc);
+}
+$('#hMinus').addEventListener('click',function(){hours=clamp(hours-1,1,12);calc()});
+$('#hPlus').addEventListener('click',function(){hours=clamp(hours+1,1,12);calc()});
+$('#calcSrv').addEventListener('change',calc);
+$('#extras').addEventListener('change',calc);
+$$('[data-srv]').forEach(function(b){ b.addEventListener('click',function(){
+  var v=b.dataset.srv; $('#bSrv').value=v;
+  var sel=$('#calcSrv'); Array.prototype.forEach.call(sel.options,function(o){ if(o.textContent.indexOf(v)===0) sel.value=o.value; });
+  calc(); document.getElementById('book').scrollIntoView({behavior:'smooth'}); setTimeout(function(){$('#bName').focus()},700);
+  toast('Услуга перенесена в бронь: '+v.toLowerCase());
+}); });
+$('#calcBook').addEventListener('click',function(){
+  var extras=$$('#extras input:checked').map(function(i){return i.dataset.name});
+  $('#bNote').value='Сессия '+hours+' ч, '+$('#calcSrv').selectedOptions[0].textContent.split(' — ')[0].toLowerCase()+
+    (extras.length?'. Дополнительно: '+extras.join(', '):'')+'. Смета: '+$('#sumTotal').textContent+'.';
+  document.getElementById('book').scrollIntoView({behavior:'smooth'}); setTimeout(function(){$('#bName').focus()},700);
+});
+
+/* ---------- оборудование ---------- */
+var GEAR=[
+ ['Ламповый конденсаторный T-47','Основной вокальный микрофон, тёплая середина и мягкий верх.','CARDIOID · 20 Hz–20 kHz','mic'],
+ ['32-канальная консоль','Аналоговое суммирование, восемь шин и inserts на каждом канале.','32 IN · 8 BUS','desk'],
+ ['Мониторы ближнего поля 8"','Честная середина без приукрашивания, комната обработана по углам.','8" · 38 Hz–22 kHz','mon'],
+ ['Ленточный микрофон R-121','Гитарные кабинеты и духовые: сглаживает пики без эквализации.','FIGURE-8 · 130 dB','ribbon'],
+ ['Аппаратный компрессор','Шина барабанов и вокала, оптическая схема с плавным релизом.','OPTO · 2:1 … 10:1','comp'],
+ ['Ленточный дилей и реверб','Пространство, которое не звучит плагином. Пружины и лента.','ANALOG · 4 HEADS','fx']
+];
+function gearIcon(kind){
+  var s='<svg viewBox="0 0 48 48" fill="none" stroke="#22E0FF" stroke-width="2">';
+  if(kind==='mic') s+='<rect x="17" y="6" width="14" height="24" rx="7" stroke="#FF2D8A"/><path d="M12 26a12 12 0 0024 0M24 38v6M17 44h14"/>';
+  if(kind==='desk') s+='<rect x="5" y="12" width="38" height="26" rx="4"/><path d="M12 18v14M20 18v14M28 18v14M36 18v14" stroke="#C6FF3D"/><circle cx="12" cy="26" r="2.5" fill="#FF2D8A" stroke="none"/><circle cx="28" cy="22" r="2.5" fill="#FF2D8A" stroke="none"/>';
+  if(kind==='mon') s+='<rect x="10" y="5" width="28" height="38" rx="4"/><circle cx="24" cy="28" r="9" stroke="#C6FF3D"/><circle cx="24" cy="13" r="4" stroke="#FF2D8A"/>';
+  if(kind==='ribbon') s+='<rect x="16" y="5" width="16" height="30" rx="8"/><path d="M20 12h8M20 18h8M20 24h8" stroke="#C6FF3D"/><path d="M24 35v8M18 43h12"/>';
+  if(kind==='comp') s+='<rect x="4" y="14" width="40" height="20" rx="4"/><circle cx="15" cy="24" r="6" stroke="#FF2D8A"/><path d="M26 20h14M26 28h9" stroke="#C6FF3D"/>';
+  if(kind==='fx') s+='<rect x="6" y="10" width="36" height="28" rx="4"/><circle cx="18" cy="24" r="7" stroke="#C6FF3D"/><path d="M30 18v12M35 20v8" stroke="#FF2D8A"/>';
+  return s+'</svg>';
+}
+$('#gearRack').innerHTML=GEAR.map(function(g){ return '<article class="gear">'+gearIcon(g[3])+'<h4>'+g[0]+'</h4><p>'+g[1]+'</p><span class="mono">'+g[2]+'</span></article>'; }).join('');
+
+/* ---------- релизы ---------- */
+var RELS=[
+ {t:'Ночной трамвай',a:'Касета',k:'boombap',c1:'#2F6BFF',c2:'#FF2D8A',y:'2026'},
+ {t:'Стеклянный двор',a:'Полынь',k:'house',c1:'#C6FF3D',c2:'#22E0FF',y:'2025'},
+ {t:'Разрыв на 152',a:'Контур',k:'breaks',c1:'#FF2D8A',c2:'#FFB020',y:'2026'},
+ {t:'Тихая комната',a:'Эхо-Сад',k:'ambient',c1:'#22E0FF',c2:'#2F6BFF',y:'2025'}
+];
+function relArt(r,i){
+  var id='ra'+i,bars='';
+  for(var j=0;j<20;j++){ var h=20+Math.abs(Math.sin(j*1.3+i))*90;
+    bars+='<rect x="'+(24+j*13)+'" y="'+(160-h)+'" width="7" height="'+h+'" rx="3" fill="'+(j%2?r.c1:r.c2)+'" opacity=".85"/>'; }
+  return '<svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>'+
+  '<linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+r.c1+'" stop-opacity=".35"/><stop offset="1" stop-color="#070A14"/></linearGradient>'+
+  '<radialGradient id="'+id+'r"><stop offset="0" stop-color="'+r.c2+'" stop-opacity=".5"/><stop offset="1" stop-color="'+r.c2+'" stop-opacity="0"/></radialGradient></defs>'+
+  '<rect width="300" height="300" fill="url(#'+id+')"/><circle cx="230" cy="60" r="120" fill="url(#'+id+'r)"/>'+
+  '<circle cx="150" cy="150" r="96" fill="none" stroke="'+r.c2+'" stroke-opacity=".3" stroke-dasharray="3 10"/>'+bars+
+  '<text x="24" y="215" font-family="monospace" font-size="12" fill="#EAF0FF">'+r.a.toUpperCase()+'</text>'+
+  '<text x="24" y="240" font-family="monospace" font-size="10" fill="'+r.c2+'">'+r.y+' · РЕЗОНАНС</text></svg>';
+}
+$('#relGrid').innerHTML=RELS.map(function(r,i){
+  return '<article class="rel" data-k="'+r.k+'"><div class="rel__art">'+relArt(r,i)+'</div><div class="rel__b"><h4>'+r.t+'</h4><p>'+r.a+' · '+r.y+'</p>'+
+  '<button class="btn btn--sm" data-play="'+r.k+'">▶ Послушать грув</button></div></article>';
+}).join('');
+$('#relGrid').addEventListener('click',function(e){
+  var b=e.target.closest('[data-play]'); if(!b) return;
+  var card=b.closest('.rel'), k=b.dataset.play, was=card.classList.contains('playing');
+  $$('.rel').forEach(function(c){c.classList.remove('playing')});
+  $$('#relGrid [data-play]').forEach(function(x){x.textContent='▶ Послушать грув';x.classList.remove('btn--lime')});
+  if(was){ stop(); return; }
+  card.classList.add('playing'); b.textContent='■ Стоп'; b.classList.add('btn--lime');
+  if(!soundOn) setSound(true);
+  loadPreset(k,true);
+  document.getElementById('machine').scrollIntoView({behavior:'smooth'});
+  toast('Играет грув релиза: '+PRESETS[k].name);
+});
+
+/* ---------- FAQ ---------- */
+var FAQ=[
+ ['Можно записаться на один час?','Да, минимальный слот — один час для сведения и вокала. Для репетиции с барабанами просим от двух часов: иначе половина времени уйдёт на саундчек.'],
+ ['Что если я не умею петь ровно?','Это нормальная часть работы. Компим дубли, аккуратно правим интонацию и тайминг — так, чтобы голос остался живым, а не превратился в робота.'],
+ ['Отдаёте исходники?','Да: стемы, инструментал и сессию проекта в вашем формате. Храним бэкап год, восстановить можно по одному сообщению.'],
+ ['Секвенсор на сайте — это запись студии?','Нет, это синтез в реальном времени прямо в вашем браузере: осцилляторы, шумовые генераторы, фильтр, сатурация и свёрточная реверберация. Ни одного загруженного сэмпла.'],
+ ['Как отменить или перенести бронь?','Позвоните или напишите минимум за 12 часов — перенесём без штрафа. Опоздание до 20 минут не сокращает ваше окно.']
+];
+$('#faqBox').innerHTML=FAQ.map(function(f,i){ return '<div class="qa rv"><button aria-expanded="false" aria-controls="fa'+i+'">'+f[0]+'<i>+</i></button><div class="qa__a" id="fa'+i+'"><p>'+f[1]+'</p></div></div>'; }).join('');
+$('#faqBox').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  var qa=b.parentNode,a=qa.querySelector('.qa__a'),open=qa.classList.toggle('open');
+  b.setAttribute('aria-expanded',open?'true':'false'); a.style.maxHeight=open?a.scrollHeight+'px':'0px';
+});
+
+/* ---------- бронь ---------- */
+(function(){ var d=new Date(),iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  $('#bDate').min=iso; $('#bDate').value=iso; })();
+function err(el,bad){ el.closest('.field').classList.toggle('err',bad); return !bad; }
+$('#bookForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var n=$('#bName'),p=$('#bPhone'),d=$('#bDate'),ok=true;
+  ok=err(n,n.value.trim().length<2)&&ok;
+  ok=err(p,!/^[+()\d\s-]{7,20}$/.test(p.value.trim()))&&ok;
+  ok=err(d,!d.value||d.value<$('#bDate').min)&&ok;
+  if(!ok){ toast('Проверьте выделенные поля',true); return; }
+  var req={name:n.value.trim(),phone:p.value.trim(),srv:$('#bSrv').value,date:d.value,time:$('#bTime').value,people:$('#bPeople').value,note:$('#bNote').value.trim(),ts:Date.now()};
+  try{ var arr=JSON.parse(localStorage.getItem('rezonans.bookings')||'[]'); arr.unshift(req); localStorage.setItem('rezonans.bookings',JSON.stringify(arr.slice(0,50))); }catch(e2){}
+  $('#bookForm').style.display='none'; $('#bookOk').classList.add('show');
+  var dd=req.date.split('-');
+  $('#bookOkText').textContent=req.name+', держим '+dd[2]+'.'+dd[1]+' с '+req.time+' — '+req.srv.toLowerCase()+', человек: '+req.people+'. Перезвоним на '+req.phone+' и подтвердим.';
+  toast('Бронь сохранена');
+});
+$('#bookAgain').addEventListener('click',function(){ $('#bookOk').classList.remove('show'); $('#bookForm').style.display=''; $('#bName').focus(); });
+
+/* ---------- навигация ---------- */
+var nav=$('#nav'),prog=$('#progress'),tick=false;
+window.addEventListener('scroll',function(){ if(tick)return; tick=true;
+  requestAnimationFrame(function(){ var y=window.pageYOffset,h=document.documentElement.scrollHeight-window.innerHeight;
+    nav.classList.toggle('scrolled',y>10); prog.style.width=(h>0?Math.min(100,y/h*100):0)+'%'; tick=false; }); },{passive:true});
+$('#burger').addEventListener('click',function(){ var l=$('#navlinks'),o=l.classList.toggle('open'); $('#burger').setAttribute('aria-expanded',o?'true':'false'); });
+$$('#navlinks a').forEach(function(a){a.addEventListener('click',function(){$('#navlinks').classList.remove('open')})});
+if('IntersectionObserver' in window){
+  var spy=new IntersectionObserver(function(es){es.forEach(function(en){ if(en.isIntersecting){ var id=en.target.id;
+    $$('#navlinks a').forEach(function(a){a.classList.toggle('active',a.dataset.spy===id)}); } })},{rootMargin:'-45% 0px -50% 0px'});
+  ['machine','tariffs','gear','works','book'].forEach(function(id){var el=document.getElementById(id); el&&spy.observe(el)});
+  var rev=new IntersectionObserver(function(es){es.forEach(function(en){ if(en.isIntersecting){en.target.classList.add('in');rev.unobserve(en.target)} })},{threshold:.05,rootMargin:'0px 0px -6% 0px'});
+  $$('.rv').forEach(function(el,i){el.style.transitionDelay=(Math.min(i,5)*50)+'ms';rev.observe(el)});
+} else $$('.rv').forEach(function(el){el.classList.add('in')});
+
+renderSeq(); syncControls(); calc(); setSound(true);
+})();
+</script>
+</body>
+</html>
